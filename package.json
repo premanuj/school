@@ -1,0 +1,24 @@
+{
+  "name": "school",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node ./bin/www"
+  },
+  "dependencies": {
+    "async": "^2.1.4",
+    "body-parser": "~1.15.2",
+    "cookie-parser": "~1.4.3",
+    "debug": "~2.2.0",
+    "express": "~4.14.0",
+    "express-generator": "^4.14.0",
+    "express-validation": "^1.0.1",
+    "jade": "~1.11.0",
+    "joi": "^9.0.4",
+    "jsonwebtoken": "^7.2.1",
+    "md5": "^2.2.1",
+    "morgan": "~1.7.0",
+    "mysql": "^2.12.0",
+    "serve-favicon": "~2.3.0"
+  }
+}
