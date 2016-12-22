@@ -66,11 +66,14 @@ module.exports.setUsers = function(arrUsers, callback) {
 module.exports.getUsers = function(role_id, callback){
   var sql_getUsers = "SELECT * FROM users WHERE role_id = ?";
   connection.query(sql_getUsers, role_id, function(error, result){
-    if (result) {
-      callback(result);
-    } else {
+    if (!!error) {
+
       console.error(error);
       callback(false);
+    } else {
+      console.log('reeeeeeee');
+      console.log(result);
+      callback(result);
     }
   });
 }
@@ -114,18 +117,14 @@ module.exports.checkUsername = function(username, callback) {
 
 
 module.exports.checkUser = function(user, callback){
-  console.log(user);
-  var sql_checkUser = "SELECT * FROM users WHERE username = ? OR email = ? AND password = ?";
+  var sql_checkUser = "SELECT * FROM users WHERE (username = ? OR email = ? AND password = ?) AND role_id = ?";
   connection.query(sql_checkUser, user, function(error, userRows, fields){
     if (error) {
-      console.error(error);
       callback(false);
     } else {
-      console.log(userRows);
       if(userRows.length>0){
         callback(userRows);
       }else {
-        console.log("dddddddddddddd");
         callback(false);
       }
     }

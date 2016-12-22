@@ -150,7 +150,7 @@ router.get('/roles/:role_id/users', function(req, res, next){
       });
       sendResponse.sendSuccessData(data, res);
     } else {
-      var errorMsg = "Unable to show list of users";
+      var errorMsg = "No user available under this role.";
       sendResponse.sendErrorMessage(errorMsg, res);
     }
   });
@@ -158,10 +158,10 @@ router.get('/roles/:role_id/users', function(req, res, next){
 
 //router.put('/roles/:role_id/users/');
 
-router.post('/login', function(req, res, next){
+router.post('/roles/:role_id/users/login', function(req, res, next){
   var password = req.body.password;
+  var role_id = req.params.role_id;
   password = md5(password);
-
   var user;
   async.parallel([
     function(callback){
@@ -192,13 +192,28 @@ router.post('/login', function(req, res, next){
         var errorMsg = "Error Occour";
         sendResponse.sendErrorMessage(errorMsg, res);
       } else {
-        console.log(user);
-        user = [user, user, password];
-        accountsModels.checkUser(user, function(result){
+        arrUsers = [user, user, password, role_id];
+        accountsModels.checkUser(arrUsers, function(result){
           if (result===false) {
-            var errorMsg = "Database Error";
+            var errorMsg = "Invalid Login Credentials";
             sendResponse.sendErrorMessage(errorMsg, res);
           } else {
+            console.log('role_id:' + role_id);
+            if (role_id==='1') {
+                req.session.admin = user;
+                console.log('admin_session:');
+                console.log(req.session.admin);
+            }
+            if (role_id==='2') {
+              req.session.student = user;
+              console.log('student_session');
+              console.log(req.session.student);
+            }
+            if (role_id==='3') {
+              req.session.teacher = user;
+              console.log('teacher_session');
+              console.log(req.session.teacher);
+            }
             var data = {'id': result[0]['id'], 'email': result[0]['email'], 'username':result[0]['username'], 'access_token':result[0]['access_token'], 'role_id':result[0]['role_id']};
             console.log(data);
             sendResponse.sendSuccessData(data, res);

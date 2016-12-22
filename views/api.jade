@@ -1,0 +1,66 @@
+extends layout
+
+block content
+    h1= title
+    p Welcome to #{title}
+    hr
+    div
+        h2 API: Post New Roles
+        description: This api will be use create a new role
+        p api_url: /api/roles
+        p method: POST
+        p fields-name: type
+        hr
+    div
+        h2 API: Get All Roles
+        description: This api will be use get all available roles.
+        p api_url: /api/roles
+        p method: GET
+        p fields-name: null
+        hr
+    div
+        h2 API: Update Role
+        description: This api will be use to update existing roles.
+        p api_url: /api/roles:role_id
+        p method: PUT
+        p params: role_id
+        p fields-name: null
+        hr
+    div
+        h2 API: Delete Role
+        description: This api will be use to delete existing roles.
+        p api_url: /api/roles:role_id
+        p method: DELETE
+        p params: role_id
+        p fields-name: null
+        hr
+    div
+        h2 API: Post New User under one Role
+        description: This api will be use to post new user. User should be assign any one role e.g: admin, teacher, student e.tc...
+        p api_url: /api/roles/:role_id/users
+        p method: POST
+        p params: role_id
+        p fields-name: username, password, email
+        hr
+    div
+        h2 API: Get all user under particular Role
+        description: This api will be use to get all users under single roles. E.g: lists all the User with student role.
+        p api_url: /api/roles/:role_id/users
+        p method: GET
+        p params: role_id
+        p fields-name:
+        hr
+    div
+        h2 API: User Login
+        description: This api will be use login user.
+        p api_url: /api/login
+        p method: POST
+        p fields-name: username or email, password
+        hr
+    div
+        h2 API: User Login
+        description: This api will be use login user.
+        p api_url: /api/login
+        p method: POST
+        p fields-name: username or email, password
+        hr
