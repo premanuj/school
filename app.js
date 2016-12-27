@@ -7,12 +7,12 @@ var bodyParser = require('body-parser');
 var jwt = require('jsonwebtoken');
 var session = require('express-session');
 
-
 var index = require('./routes/index');
 var users = require('./routes/users');
 var accountsController = require('./controllers/accountsController');
 var teachersController = require('./controllers/teachersController');
 var adminController = require('./controllers/adminController');
+var studentsController = require('./controllers/studentsController');
 var app = express();
 
 // view engine setup
@@ -35,6 +35,7 @@ app.use('/users', users);
 app.use('/api', accountsController);
 app.use('/api', teachersController);
 app.use('/api', adminController);
+app.use('/api', studentsController);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

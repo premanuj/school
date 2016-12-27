@@ -210,4 +210,138 @@ router.delete('/teachers/:teacher_id/subjects/:subject_id/works/:work_id', funct
   });
 });
 
+router.post('/teachers/:teacher_id/subjects/:subject_id/works/:work_id/questions', function(req, res, next){
+  var work_id = req.params.work_id;
+  var subjective = req.body.subjective;
+  var objective = req.body.objective;
+
+  var arrSubjective = [subjective, work_id];
+  var arrObjective = [objective, work_id];
+  async.parallel([
+    function(callback){
+      if (subjective.length!=0) {
+        teachersModel.setSubjectiveQuestions(arrSubjective, function(result){
+          console.log('ok');
+          callback(null);
+        });
+      }
+    },
+    function(callback){
+      if (objective.length!=0) {
+        teachersModel.setObjectiveQuestions(arrObjective, function(result){
+          console.log('objective');
+          callback(null);
+        });
+      }else {
+        console.log('no oobjective');
+        callback(null);
+      }
+    }
+  ],
+  function(error, result){
+    if (!!error) {
+      console.log(error);
+      sendResponse.someThingWrongError(res);
+    }else {
+      var successMsg = "Questions posted successfully.";
+      sendResponse.successStatusMsg(successMsg, res);
+    }
+  });
+});
+
+router.get('/teachers/:teacher_id/subjects/:subject_id/works/:work_id/questions', function(req, res, next){
+  var work_id = req.params.work_id;
+  teachersModel.getQuestions(work_id, function(result){
+    if(result===false){
+      sendResponse.someThingWrongError(res);
+    }else {
+     sendResponse.sendSuccessData(result, res);
+    }
+  });
+});
+
+router.put('/teachers/:teacher_id/subjects/:subject_id/works/:work_id/questions/:question_id', function(req, res, next){
+  var work_id = req.params.work_id;
+  var question_id = req.params.question_id;
+  var question_title = req.body.question_title;
+  var weightage_marks = req.body.weightage_marks;
+  if(req.body.options){
+    var options = req.body.options;
+    var arrUpdate = [question_title, weightage_marks, question_id, options];
+  }else {
+    var arrUpdate = [question_title, weightage_marks, question_id];
+  }
+  teachersModel.updateQuestions(arrUpdate, function(result){
+    if(result===false){
+      sendResponse.someThingWrongError(res);
+    }else {
+      var successMsg = "Updated successfully"
+     sendResponse.successStatusMsg(successMsg, res);
+    }
+  });
+});
+
+router.delete('/teachers/:teacher_id/subjects/:subject_id/works/:work_id/questions/:question_id', function(req, res, next){
+  var question_id = req.params.question_id;
+  var work_id = req.params.work_id;
+  var question_type = req.body.question_type;
+  var arrQuestion = [question_id, question_type];
+
+  teachersModel.deleteQuestion(arrQuestion, function(result){
+      if (result===false) {
+        var errorMsg = "Deletion failed. Database Error.";
+        sendResponse.sendErrorMessage(errorMsg, res);
+      }else {
+        var successMsg = "Deletion Successfull.";
+        sendResponse.successStatusMsg(successMsg, res);
+      }
+  });
+});
+
+router.get('/teachers/:teacher_id/subjects/:subject_id/works/:work_id/studentanswers', function(req, res, next){
+  teachersModel.getStudentanswers(function(result){
+    if (result===false) {
+      var errorMsg = "Selection of answer posted by student failed.";
+      sendResponse.sendErrorMessage(errorMsg, res);
+    }else {
+      sendResponse.sendSuccessData(result, res);
+    }
+  });
+});
+
+//update studentanswers table and give marks for subjective questions by teachers.
+
+router.put('/teachers/:teacher_id/subjects/:subject_id/works/:work_id/questions/:q_id/studentanswers/:std_id', function(req, res, next){
+  var std_id = req.params.std_id;
+  var q_id = req.params.q_id;
+  var weightage_marks = req.body.weightage_marks;
+  var arrMarks = [weightage_marks, std_id, q_id];
+  teachersModel.putMarks(arrMarks, function(result){
+    if (result===false) {
+      var errorMsg = "Marks updation failed.";
+      sendResponse.sendErrorMessage(errorMsg, res);
+    } else {
+      var successMsg = "Marks updated successfully.";
+      sendResponse.successStatusMsg(successMsg, res);
+    }
+  });
+});
+
+router.post('/teachers/:teacher_id/subjects/:subject/:subject_id/works/:work_id/students/:student_id/results', function(req, res, next){
+  var work_id = req.params.work_id;
+  var std_id = req.params.student_id;
+  var feedback = req.body.feedback;
+  var obtained_marks = req.body.obtained_marks;
+  var arrResult = [std_id, work_id, feedback, obtained_marks];
+  teachersModel.setResults(arrResult, function(result){
+    if (result===false) {
+      var errorMsg = "Result Posted Successfully.";
+      sendResponse.sendErrorMessage(errorMsg, res);
+    } else {
+      var successMsg = "Resulted posted successfully.";
+      sendResponse.sendErrorMessage(successMsg, res);
+    }
+  });
+});
+
 module.exports = router;
