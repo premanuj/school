@@ -1,7 +1,7 @@
 var connection = require("../routes/dbConnection.js");
 
 module.exports.setSections = function(arrSection, callback){
-  var sql_setSections = "INSERT INTO sections (name) VALUES (?)";
+  var sql_setSections = "INSERT INTO sections (name, class_id) VALUES (?, ?)";
   connection.query(sql_setSections, arrSection, function(error, result){
     if (!!error) {
       console.error(error);
@@ -24,8 +24,22 @@ module.exports.getSections = function(callback){
   });
 };
 
+module.exports.getSectionsByClassID = function(class_id, callback){
+  var sql_getSections = "SELECT s.id, s.name, c.grade FROM classes c INNER JOIN sections s ON c.id = s.class_id WHERE c.id =?";
+  connection.query(sql_getSections, class_id, function(error, result){
+    if (!!error) {
+      console.error(error);
+      callback(false);
+    }else {
+      console.log('daaata: ');
+      console.log(result);
+      callback(result);
+    }
+  });
+};
+
 module.exports.putSection = function(arrSection, callback){
-  var sql_putSection = "UPDATE sections SET name = ? WHERE id = ?";
+  var sql_putSection = "UPDATE sections SET name = ? WHERE id = ? AND class_id =?";
   connection.query(sql_putSection, arrSection, function(error, result){
     if (!!error) {
       console.error(error);
@@ -37,7 +51,7 @@ module.exports.putSection = function(arrSection, callback){
 };
 
 module.exports.deleteSection = function(section_id, callback){
-  var sql_deleteSection = "DELETE FROM sections WHERE id = ?";
+  var sql_deleteSection = "DELETE FROM sections WHERE id = ? AND class_id = ?";
   connection.query(sql_deleteSection, section_id, function(error, result){
     if (!!error) {
       console.error(error);
@@ -49,7 +63,7 @@ module.exports.deleteSection = function(section_id, callback){
 };
 
 module.exports.setClasses = function(arrClass, callback){
-  var sql_setClasses = "INSERT INTO classes (grade, sec_id) VALUES (?, ?)";
+  var sql_setClasses = "INSERT INTO classes (grade) VALUES (?)";
   connection.query(sql_setClasses, arrClass, function(error, result){
     if (!!error) {
       console.error(error);
@@ -61,14 +75,12 @@ module.exports.setClasses = function(arrClass, callback){
 };
 
 module.exports.getclasses = function(callback){
-  console.log('models.....');
-  var sql_getClasses = "SELECT c.id, c.sec_id, c.grade, s.name FROM classes c INNER JOIN sections s ON c.sec_id = s.id";
+  var sql_getClasses = "SELECT * FROM classes";
   connection.query(sql_getClasses, function(error, result){
     if (!!error) {
       console.error(error);
       callback(false);
     }else {
-      console.log(result);
       callback(result);
     }
   });
@@ -110,7 +122,7 @@ module.exports.setSubjects = function(arrSubjects, callback){
   });
 };
 
-module.exports.getSubjects = function(subject_id, callback){
+module.exports.getSubjectsByClassId = function(subject_id, callback){
   var sql_getClasses = "SELECT s.id, s.name, c.grade FROM subjects s INNER JOIN classes c ON s.class_id = c.id WHERE s.class_id = ?";
   connection.query(sql_getClasses, subject_id, function(error, result){
     if (!!error) {
@@ -118,6 +130,18 @@ module.exports.getSubjects = function(subject_id, callback){
       callback(false);
     }else {
       console.log(result);
+      callback(result);
+    }
+  });
+};
+
+module.exports.getSubjects = function(callback){
+  var sql_getClasses = "SELECT * FROM subjects";
+  connection.query(sql_getClasses, function(error, result){
+    if (!!error) {
+      console.error(error);
+      callback(false);
+    }else {
       callback(result);
     }
   });
@@ -142,6 +166,7 @@ module.exports.deleteSubject = function(subject_id, callback){
       console.error(error);
       callback(false);
     }else {
+      console.log('fdsfsdgsf');
       callback(true);
     }
   });

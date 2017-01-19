@@ -6,6 +6,7 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var jwt = require('jsonwebtoken');
 var session = require('express-session');
+var cors = require('cors');
 
 var index = require('./routes/index');
 var users = require('./routes/users');
@@ -26,6 +27,7 @@ app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
+app.use(cors());
 app.use(session({secret: 'freakoids@123', resave:false, saveUninitialized:true}));
 app.use(express.static(path.join(__dirname, 'public')));
 

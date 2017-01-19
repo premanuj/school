@@ -58,18 +58,17 @@ router.post('/users/:user_id/teachers', function(req, res, next){
 *--------------------------------------------------------
 */
 
-router.get("/users/:user_id/teachers", function(req, res, next){
-  var user_id = req.params.user_id;
-  teachersModel.getTeacher(user_id, function(result){
+router.get("/roles/:role_id/teachers", function(req, res, next){
+  var role_id = req.params.role_id;
+  teachersModel.getTeacher(role_id, function(result){
     if (result===false) {
       var errorMsg = "Data selection Failed.";
       sendResponse.sendErrorMessage(errorMsg, res);
     } else {
       var data = [];
       result.forEach(function(value){
-        data.push({'id':value['id'], 'fname':value['fname'], 'mname': value['mname'], 'lname':value['lname'], 'contacts':value['contacts'], 'address': value['address'], 'dob':value['dob'], 'join_date' : value['join_date'], 'user_id' : value['user_id']});
+        data.push({'id':value['id'], 'fname':value['fname'], 'mname': value['mname'], 'lname':value['lname'], 'email':value['email'], 'contacts':value['contacts'], 'address': value['address'], 'dob':value['dob'], 'join_date' : value['join_date'], 'user_id' : value['user_id']});
       });
-      console.log(data);
       sendResponse.sendSuccessData(data, res);
     }
   });
@@ -81,8 +80,8 @@ router.get("/users/:user_id/teachers", function(req, res, next){
 *--------------------------------------------------------
 */
 
-router.put("/users/:user_id/teachers/:t_id", function(req, res, next){
-  var user_id = req.params.user_id;
+router.put("/roles/:role_id/teachers/:t_id", function(req, res, next){
+  var user_id = req.params.role_id;
   var t_id = req.params.t_id;
   var fname = req.body.fname;
   var mname = req.body.mname;
@@ -98,6 +97,22 @@ router.put("/users/:user_id/teachers/:t_id", function(req, res, next){
     } else {
     //  var data = {'id':result[0]['id'], 'fname':result[0]['fname'], 'mname': result[0]['mname'], 'lname':result[0]['lname'], 'contacts':result[0]['contacts'], 'address': result[0]['address'], 'dob':result[0]['dob'], 'join_date' : result[0]['join_date'], 'user_id' : result[0]['user_id']};
       var successMsg = "Updation Successfull.";
+      sendResponse.successStatusMsg(successMsg, res);
+    }
+  });
+});
+
+router.delete('/roles/:role_id/teachers/:teacher_id', function(req, res, next){
+  console.log('here');
+  var teacher_id = req.params.teacher_id;
+  console.log(teacher_id);
+  teachersModel.deleteTeachers(teacher_id, function(result){
+    if (result===false) {
+      console.log('errrrrr');
+      var errorMsg = "Teachers cannot deleted.";
+      sendResponse.sendErrorMessage(errorMsg, res);
+    } else {
+      var successMsg = "Techers deleted successfully";
       sendResponse.successStatusMsg(successMsg, res);
     }
   });
@@ -121,7 +136,7 @@ router.get("/teachers/:teacher_id/subjects", function(req, res, next){
     }else {
       data = [];
       result.forEach(function(value){
-        data.push({"id": teacher_id, "subject":value['name'], "grade": value['grade']});
+        data.push({"teacher_id": teacher_id, "id": value['id'], "subject":value['name'], "grade": value['grade'], "class_id": value['class_id']});
       });
       sendResponse.sendSuccessData(data, res);
     }
@@ -186,6 +201,7 @@ router.put('/teachers/:teacher_id/subjects/:subject_id/works/:work_id', function
   var work_type = req.body.work_type;
   var submit_date = req.body.submit_date;
   var arrWorks = [work_title, submit_date, work_type, work_id];
+  console.log(arrWorks);
   teachersModel.updateWork(arrWorks, function(result){
     if (result===false) {
       var errorMsg = "Work updatin failed.";
@@ -214,14 +230,14 @@ router.post('/teachers/:teacher_id/subjects/:subject_id/works/:work_id/questions
   var work_id = req.params.work_id;
   var subjective = req.body.subjective;
   var objective = req.body.objective;
-
   var arrSubjective = [subjective, work_id];
   var arrObjective = [objective, work_id];
+  // console.log(arrSubjective);
+  // console.log(arrObjective);
   async.parallel([
     function(callback){
       if (subjective.length!=0) {
         teachersModel.setSubjectiveQuestions(arrSubjective, function(result){
-          console.log('ok');
           callback(null);
         });
       }
@@ -229,7 +245,6 @@ router.post('/teachers/:teacher_id/subjects/:subject_id/works/:work_id/questions
     function(callback){
       if (objective.length!=0) {
         teachersModel.setObjectiveQuestions(arrObjective, function(result){
-          console.log('objective');
           callback(null);
         });
       }else {
@@ -327,19 +342,84 @@ router.put('/teachers/:teacher_id/subjects/:subject_id/works/:work_id/questions/
   });
 });
 
-router.post('/teachers/:teacher_id/subjects/:subject/:subject_id/works/:work_id/students/:student_id/results', function(req, res, next){
+router.post('/teachers/:teacher_id/subjects/:subject_id/works/:work_id/students/:student_id/results', function(req, res, next){
+  var work_id = req.params.work_id;
+  var std_id = req.params.student_id;
+  //var feedback = req.body.feedback;
+  var arrResult = [std_id, work_id];
+  teachersModel.setResults(arrResult, function(result){
+    if (result===false) {
+      var errorMsg = "Result post failed. It seems result has been posted already for corresponding student and work.";
+      sendResponse.sendErrorMessage(errorMsg, res);
+    } else {
+      var successMsg = "Result posted successfully.";
+      sendResponse.successStatusMsg(successMsg, res);
+    }
+  });
+});
+
+//get all results by work_id
+//NOT COMPLETED
+
+router.get('/teachers/:teacher_id/subjects/:subject_id/works/:work_id/students/:student_id/results', function(req, res, next){
+  var work_id = req.params.work_id;
+  var subject_id = req.params.subject_id;
+  var student_id = req.params.student_id;
+  var arrInfo = [work_id, student_id];
+  console.log(work_id);
+  teachersModel.getResultsByWorkId(arrInfo, function(result){
+    if(result===false){
+      var errorMsg = "Result selection failed.";
+      sendResponse.sendErrorMessage(errorMsg, res);
+      console.error(error);
+    }else {
+      sendResponse.sendSuccessData(result, res);
+    }
+  });
+
+});
+
+
+//get all results of particular subject
+//NOT COMPLETED
+
+// router.get('/teachers/:teacher_id/subjects/:subject_id/works/:work_id/results', function(res, req, next){
+//   if(req.params.work_id){
+//     console.log('seted');
+//   }
+//   console.log('here');
+//   var work_id = req.params.work_id;
+//   console.log(work_id);
+//   teachersModel.getResultsByWorkId(work_id, function(result){
+//     if(result===false){
+//       var errorMsg = "Result selection failed.";
+//       sendResponse.sendErrorMessage(errorMsg, res);
+//       console.error(error);
+//     }else {
+//       sendResponse.sendSuccessData(result, res);
+//     }
+//   });
+// });
+
+
+// router.get('/teachers/:teacher_id/subjects/:subject_id/works/:work_id/students/:student_id/results', function(res, req, next){
+//   var work_id = req.params.work_id;
+//   var std_id = req.params.student_id;
+//
+// });
+
+router.put('/teachers/:teacher_id/subjects/:subject_id/works/:work_id/students/:student_id/results/feedback', function(req, res, next){
   var work_id = req.params.work_id;
   var std_id = req.params.student_id;
   var feedback = req.body.feedback;
-  var obtained_marks = req.body.obtained_marks;
-  var arrResult = [std_id, work_id, feedback, obtained_marks];
-  teachersModel.setResults(arrResult, function(result){
+  var arrResult = [feedback, std_id, work_id];
+  teachersModel.putResults(arrResult, function(result){
     if (result===false) {
-      var errorMsg = "Result Posted Successfully.";
+      var errorMsg = "Feedback updation failed.";
       sendResponse.sendErrorMessage(errorMsg, res);
     } else {
-      var successMsg = "Resulted posted successfully.";
-      sendResponse.sendErrorMessage(successMsg, res);
+      var successMsg = "Feedback posted successfully";
+      sendResponse.successStatusMsg(successMsg, res);
     }
   });
 });

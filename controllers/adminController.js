@@ -8,14 +8,29 @@ var useFunction = require('../routes/useFunction');
 var adminModel = require('../models/adminModel');
 var dbConnection = require('../routes/dbConnection');
 
-router.post('/classes/sections', function(req, res, next){
+// router.post('users/:user_id/admin/teachers', function(res, req, next){
+//   var email = req.body.email;
+//   var username = req.body.username;
+//   var password = req.body.password;
+//   var fname = req.body.fname;
+//   var mname = req.body.mname;
+//   var lname = req.body.lname;
+//   var contact = req.body.contact;
+//   var address = req.body.address;
+//
+// });
+
+router.post('/classes/:class_id/sections', function(req, res, next){
+  var class_id = req.params.class_id;
   var section = req.body.section;
+  var arrSection = [section, class_id];
+  console.log(arrSection);
   // if (!req.session.admin) {
   //   console.log(req.session.admin);
   //   sendResponse.invalidAccessToken(res);
   //   return;
   // }
-  adminModel.setSections(section, function(result){
+  adminModel.setSections(arrSection, function(result){
     if (result===false) {
       var errorMsg = "Section insertation failed";
       sendResponse.sendErrorMessage(errorMsg, res);
@@ -24,6 +39,27 @@ router.post('/classes/sections', function(req, res, next){
       var data = {'id':result['insertId'], 'name': section};
       console.log(data);
       console.log(result);
+      sendResponse.sendSuccessData(data, res);
+    }
+  });
+});
+
+router.get('/classes/:class_id/sections', function(req,res, next){
+  // if (!req.session.admin) {
+  //   console.log('no session for admin');
+  //   sendResponse.invalidAccessToken(res);
+  //   return;
+  // }
+  var class_id = req.params.class_id;
+  adminModel.getSectionsByClassID(class_id, function(result){
+    if (result===false) {
+      var errorMsg = "Section selection failed.";
+      sendResponse.sendErrorMessage(errorMsg, res);
+    } else {
+      var data = [];
+      result.forEach(function(value){
+        data.push({'id': value['id'], 'section': value['name']});
+      });
       sendResponse.sendSuccessData(data, res);
     }
   });
@@ -42,24 +78,26 @@ router.get('/classes/sections', function(req,res, next){
     } else {
       var data = [];
       result.forEach(function(value){
-        data.push({'id': value['id'], 'section': value['name']});
+        data.push({'id': value['id'], 'section': value['name'], 'class_id':value['class_id']});
       });
       sendResponse.sendSuccessData(data, res);
     }
   });
 });
 
-router.put('/classes/sections/:section_id', function(req, res, next){
+
+router.put('/classes:class_id/sections/:section_id', function(req, res, next){
   var section_id = req.params.section_id;
+  var class_id = req.params.class_id;
   var section = req.body.section;
-  var arrSection = [section, section_id];
+  var arrSection = [section, section_id, class_id];
   console.log(arrSection);
   // if (!req.session.admin) {
   //   console.log('no session for admin');
   //   sendResponse.invalidAccessToken(res);
   //   return;
   // }
-  adminModel.putSection(section_id, function(result){
+  adminModel.putSection(arrSection, function(result){
     if (result===false) {
       var errorMsg = "Section updation failed. Check your section id";
       sendResponse.sendErrorMessage(errorMsg, res);
@@ -71,14 +109,16 @@ router.put('/classes/sections/:section_id', function(req, res, next){
 });
 
 
-router.delete('/classes/sections/:section_id', function(req, res, next){
+router.delete('/classes/:class_id/sections/:section_id', function(req, res, next){
   var section_id = req.params.section_id;
+  var class_id = req.params.class_id;
+  var arrSection = [section_id, class_id];
   // if (!req.session.admin) {
   //   console.log('no session for admin');
   //   sendResponse.invalidAccessToken(res);
   //   return;
   // }
-  adminModel.deleteSection(section_id, function(result){
+  adminModel.deleteSection(arrSection, function(result){
     if (result===false) {
       var errorMsg = "Section deletion failed. Check your section id";
       sendResponse.sendErrorMessage(errorMsg, res);
@@ -89,10 +129,8 @@ router.delete('/classes/sections/:section_id', function(req, res, next){
   });
 });
 
-router.post('/classes/sections/:section_id', function(req, res, next){
-  var section_id = req.params.section_id;
+router.post('/classes', function(req, res, next){
   var grade = req.body.grade;
-  var arrClasses = [grade, section_id];
   // if (!req.session.admin) {
   //   console.log('you are not admin. please log in as admin.');
   //   sendResponse.invalidAccessToken(res);
@@ -100,20 +138,21 @@ router.post('/classes/sections/:section_id', function(req, res, next){
   // }
   async.waterfall([
     function(callback){
-      useFunction.checkFields(res, arrClasses, callback);
+      useFunction.checkFields(res, grade, callback);
     }],
   function(error, result){
     if (!!error) {
       console.error(error);
       sendResponse.someThingWrongError(res);
     }else {
-      adminModel.setClasses(arrClasses, function(result){
+      adminModel.setClasses(grade, function(result){
         if (result===false) {
           var errorMsg = "Classes insertation failed";
           sendResponse.sendErrorMessage(errorMsg, res);
         }else{
-          //var successMsg = "Classes inserted successfully.";
-          var data = {'id':result['id'], 'grade': grade, 'section_id': section_id}
+          var successMsg = "Classes inserted successfully.";
+          console.log(successMsg);
+          var data = {'id':result['id'], 'grade': result['grade']}
           sendResponse.sendSuccessData(data, res);
         }
       });
@@ -135,7 +174,7 @@ router.get('/classes', function(req,res, next){
     } else {
       var data = [];
       result.forEach(function(value){
-        data.push({'id': value['id'], 'grade': value['grade'], 'section': value['name'], 'section_id':value['sec_id']});
+        data.push({'id': value['id'], 'grade': value['grade']});
       });
       sendResponse.sendSuccessData(data, res);
     }
@@ -224,14 +263,35 @@ router.get('/classes/:class_id/subjects', function(req,res, next){
   //   sendResponse.invalidAccessToken(res);
   //   return;
   // }
-  adminModel.getSubjects(class_id, function(result){
+  adminModel.getSubjectsByClassId(class_id, function(result){
     if (result===false) {
       var errorMsg = "Subjects selection failed.";
       sendResponse.sendErrorMessage(errorMsg, res);
     } else {
       var data = [];
       result.forEach(function(value){
-        data.push({'id': value['id'], 'grade': value['grade'], 'subject':value['name']});
+        data.push({'id': value['id'], 'class_id': value['class_id'], 'subject':value['name'], 'teacher_id':value['teacher_id']});
+      });
+      sendResponse.sendSuccessData(data, res);
+    }
+  });
+});
+
+router.get('/classes/subjects', function(req,res, next){
+  console.log('hereeeeee');
+  // if (!req.session.admin) {
+  //   console.log('no session for admin');
+  //   sendResponse.invalidAccessToken(res);
+  //   return;
+  // }
+  adminModel.getSubjects(function(result){
+    if (result===false) {
+      var errorMsg = "Subjects selection failed.";
+      sendResponse.sendErrorMessage(errorMsg, res);
+    } else {
+      var data = [];
+      result.forEach(function(value){
+        data.push({'id': value['id'], 'class_id': value['class_id'], 'subject':value['name'], 'teacher_id':value['teacher_id']});
       });
       sendResponse.sendSuccessData(data, res);
     }
@@ -269,7 +329,8 @@ router.delete('/classes/:class_id/subjects/:subject_id', function(req, res, next
   //   sendResponse.invalidAccessToken(res);
   //   return;
   // }
-  adminModel.deleteClass(subject_id, function(result){
+  console.log(subject_id);
+  adminModel.deleteSubject(subject_id, function(result){
     if (result===false) {
       var errorMsg = "Subject deletion failed. Check your subject id";
       sendResponse.sendErrorMessage(errorMsg, res);

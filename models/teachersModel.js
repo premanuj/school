@@ -14,9 +14,8 @@ module.exports.setTeachers = function(arrTeachers, callback) {
 }
 
 module.exports.getTeacher = function(arrTeachers, callback) {
-    sql_getTeachers = "SELECT * FROM teachers WHERE user_id = ?";
+    sql_getTeachers = "SELECT * FROM users u LEFT JOIN teachers t ON u.id = t.user_id WHERE u.role_id = ?";
     connection.query(sql_getTeachers, arrTeachers, function(error, result) {
-        console.log(result);
         if (!!error) {
             callback(false);
         } else {
@@ -29,7 +28,6 @@ module.exports.putTeacher = function(arrTeachers, callback) {
     console.log(arrTeachers);
     var sql_putTeachers = "UPDATE teachers SET fname = ?, mname = ?, lname = ?, contacts = ?, address = ?, dob = ? WHERE id = ?";
     connection.query(sql_putTeachers, arrTeachers, function(error, result) {
-        console.log(result);
         if (!!error) {
             console.error(error);
             callback(false);
@@ -39,8 +37,21 @@ module.exports.putTeacher = function(arrTeachers, callback) {
     });
 }
 
+module.exports.deleteTeachers = function(deleteTeachers, callback) {
+    var sql_deleteTeachers = "DELETE FROM teachers WHERE id = ?";
+    connection.query(sql_deleteTeachers, deleteTeachers, function(error, result) {
+        if (!!error) {
+            console.error(error);
+            callback(false);
+        } else {
+            console.log('data');
+            console.log('student deletion success');
+            callback(true);
+        }
+    });
+}
 module.exports.getSubjects = function(teacher_id, callback) {
-    var sql_getSubjects = "SELECT s.name, c.grade FROM subjects s INNER JOIN classes c ON s.class_id = c.id WHERE s.teacher_id = ?";
+    var sql_getSubjects = "SELECT s.id, s.name, s.class_id, c.grade FROM subjects s INNER JOIN classes c ON s.class_id = c.id WHERE s.teacher_id = ?";
     connection.query(sql_getSubjects, teacher_id, function(error, resultRows, fields) {
         if (!!error) {
             console.log(error);
@@ -49,6 +60,7 @@ module.exports.getSubjects = function(teacher_id, callback) {
             if (resultRows.length === 0) {
                 callback(null);
             } else {
+                console.log(resultRows);
                 callback(resultRows);
             }
         }
@@ -106,13 +118,13 @@ module.exports.setSubjectiveQuestions = function(arrSubjective, cb) {
     var work_id = arrSubjective[1];
     var arrQuestion = arrSubjective[0];
     var status;
-
     var sql_Question = "INSERT INTO questions (question_title, question_type, weightage_marks, work_id) VALUES (?, ?, ?, ?)";
     async.eachSeries(arrQuestion,
         function(questions, callback) {
             var question = [questions['question'], 's', questions['marks'], work_id];
             connection.query(sql_Question, question, function(error, result) {
                 if (!!error) {
+                    console.log(error);
                     status = false;
                 } else {
                     status = true;
@@ -135,6 +147,7 @@ module.exports.setSubjectiveQuestions = function(arrSubjective, cb) {
 module.exports.setObjectiveQuestions = function(arrObjective, cb) {
     var work_id = arrObjective[1];
     var arrQuestion = arrObjective[0];
+  //  console.log(arrQuestion);
     var status;
     var label = [];
     var value = [];
@@ -146,6 +159,7 @@ module.exports.setObjectiveQuestions = function(arrObjective, cb) {
     async.eachSeries(arrQuestion, function(questions, cb1) {
             var question = [questions['question'], 'o', questions['mark'], work_id];
             answer = questions['answer'];
+            console.log('This is correct answer '+answer);
             var options = questions['options'];
             connection.query(sql_Question, question, function(error, resultRows) {
                 if (!!error) {
@@ -155,47 +169,65 @@ module.exports.setObjectiveQuestions = function(arrObjective, cb) {
                 } else {
                     var label = options.map((option) => option.label);
                     var value = options.map((option) => option.value);
-                    var count = 0;
-                    //count = parseInt(count);
-                    async.eachSeries(label, function(eachLevel, callback) {
-                            var arrOption = [eachLevel, value[count], resultRows['insertId']];
-                            connection.query(sql_objectiveAnswer, arrOption, function(error, valueRows) {
-                                if (!!error) {
-                                    console.log(error);
-                                    cb(false);
-                                } else {
-                                    console.log('ans' + label[count]);
-                                    if (answer === label[count]) {
-                                        console.log(label[count]);
-                                        lastInsertId = valueRows['insertId'];
-                                        connection.query(sql_updateQuestionsTable, [lastInsertId, resultRows['insertId']], function(err, updateResult) {
-                                            if (!!error) {
-                                                console.log("update errrrrr");
-                                                console.error(error);
-                                                cb(false);
-                                            } else {
-                                                console.log('working');
-                                                console.log(updateResult);
-                                                count = parseInt(count) + 1;
-                                                callback();
+                    var count = -1;
+                    console.log('-ve count::'+count);
+                            async.eachSeries(value, function(eachValue, callbackopt) {
+                              count += 1;
+                              console.log('count::'+count);
+                                    var arrOption = [label[count], eachValue, resultRows['insertId']];
+                                    connection.query(sql_objectiveAnswer, arrOption, function(error, valueRows) {
+                                        if (!!error) {
+                                          status = false;
+                                            console.log(error);
+                                            cb(false);
+                                        } else {
+                                          //console.log(count);
+                                            if (answer === label[count]) {
+                                             console.log('answer : '+answer);
+                                                lastInsertId = valueRows['insertId'];
+                                                connection.query(sql_updateQuestionsTable, [lastInsertId, resultRows['insertId']], function(err, updateResult) {
+                                                    if (!!error) {
+                                                      status = false;
+                                                        console.error(error);
+                                                        cb(false);
+                                                    } else {
+                                                      status = true;
+                                                      console.log("callbackopt 1");
+                                                      if (count == value.length-1) {
+                                                        console.log("Count Limit");
+                                                          cb1();
+                                                      } else {
+                                                          callbackopt();
+                                                      }
+                                                    }
+                                                });
+                                            }else{
+                                              status = true;
+                                              console.log("callbackopt 2");
+                                               if (count == value.length-1) {
+                                                 console.log(count);
+                                                   cb1();
+                                               } else {
+                                                  callbackopt();
+                                               }
                                             }
-                                        });
-                                    }
+                                        }
 
-                                }
-                            });
-                        },
-                        function(error) {
-                            if (!!error) {
-                                console.log('hhh');
-                                console.log(error);
-                                status = 0;
-                                cb(status);
-                            }
-                        });
+                                    });
+
+                                },
+                                function(error) {
+                                    if (!!error) {
+                                        console.log('hhh');
+                                        console.log(error);
+                                        status = 0;
+                                        cb(status);
+                                    }else {
+                                      cb(status);
+                                    }
+                                });
                 }
             });
-            cb1();
         },
         function(error) {
             if (!!error) {
@@ -228,20 +260,15 @@ module.exports.getQuestions = function(work_id, callback) {
                     if (!!error) {
                         callback(false);
                     } else {
-                        var count = 0;
                         async.eachSeries(id, function(getId, optionCallback) {
                                 connection.query(sql_getOptions, getId, function(error, optionResult) {
-                                    console.log("Query");
                                     if (!!error) {
                                         callback(false);
                                     } else {
-                                        option.push(optionResult[count]);
-                                        count += count;
+                                        option.push(optionResult);
                                         optionCallback();
                                     }
                                 });
-                                console.log("Callback");
-
                             },
                             function(error) {
                                 if (!!error) {
@@ -390,51 +417,130 @@ module.exports.deleteQuestion = function(arrQuestion, callback) {
             if (!!error) {
                 callback(false);
             } else {
-              var sql_deleteQuestion = "DELETE FROM questions WHERE id = ?";
-              connection.query(sql_deleteQuestion, q_id, function(error, result) {
-                  if (error) {
-                      console.error(error);
-                      callback(false);
-                  } else
-                      callback(true);
-              });
+                var sql_deleteQuestion = "DELETE FROM questions WHERE id = ?";
+                connection.query(sql_deleteQuestion, q_id, function(error, result) {
+                    if (error) {
+                        console.error(error);
+                        callback(false);
+                    } else
+                        callback(true);
+                });
             }
         });
 
 }
 
-module.exports.getStudentanswers = function(callback){
-  var sql_getStudentAnsewers = "SELECT * FROM studentanswers";
-  connection.query(sql_getStudentAnsewers, function(error, answerRows){
-      if (!!error) {
-        console.error(error);
-        callback(false);
-      }else{
-        callback(answerRows);
-      }
-  });
+module.exports.getStudentanswers = function(callback) {
+    var sql_getStudentAnsewers = "SELECT * FROM studentanswers";
+    connection.query(sql_getStudentAnsewers, function(error, answerRows) {
+        if (!!error) {
+            console.error(error);
+            callback(false);
+        } else {
+            callback(answerRows);
+        }
+    });
 }
 
-module.exports.putMarks = function(arrMarks, callback){
-  var sql_putMarks = "UPDATE studentanswers SET weightage_marks = ? WHERE std_id = ? AND question_id= ? ";
-  connection.query(sql_putMarks, arrMarks, function(error, result){
-    if (!!error) {
-      console.error(error);
-      callback(false);
-    } else {
-      callback(true);
-    }
-  });
+module.exports.putMarks = function(arrMarks, callback) {
+    var sql_putMarks = "UPDATE studentanswers SET weightage_marks = ? WHERE std_id = ? AND question_id= ? ";
+    connection.query(sql_putMarks, arrMarks, function(error, result) {
+        if (!!error) {
+            console.error(error);
+            callback(false);
+        } else {
+            callback(true);
+        }
+    });
 }
 
-module.exports.setResults = function(arrResult, callback){
-  var sql_setResults ="INSERT INTO results (std_id, work_id, feedback, obtained_marks) VALUES (?, ?, ?, ?)";
-  connection.query(sql_setResults, arrResult, function(error, result){
-    if (!!error) {
-      console.error(error);
-      callback(false);
-    }else {
-      callbakc(true);
-    }
-  });
+module.exports.setResults = function(arrResult, callback) {
+    var std_id = arrResult[0];
+    var work_id = arrResult[1];
+    var totalMarks = 0;
+    var sql_findMarks = "SELECT id FROM questions WHERE work_id = ?";
+    async.waterfall([
+            function(cb) {
+                connection.query(sql_findMarks, work_id, function(error, result) {
+                    if (!!error) {
+                        console.error(error);
+                        callback(false);
+                    } else {
+                        var count = 0;
+                        async.eachSeries(result, function(value, idCallback) {
+                                var student_question_id = [std_id, value['id']];
+                                var sql_sumMarks = "SELECT weightage_marks FROM studentanswers WHERE std_id = ? AND question_id = ? AND weightage_marks IS NOT NULL";
+                                connection.query(sql_sumMarks, student_question_id, function(error, resultMarks) {
+                                    if (!!error) {
+                                        console.error(error);
+                                        callback(false);
+                                    } else {
+                                        console.log(resultMarks[0]);
+                                        console.log(resultMarks[0]['weightage_marks']);
+                                        var marks = resultMarks[0]['weightage_marks'];
+                                        console.log('marks');
+                                        console.log(marks);
+                                        //totalMarks = parseInt(totalMarks) + parseInt(marks);
+                                        totalMarks = totalMarks + marks;
+                                        count = parseInt(count) + 1;
+                                        console.log('total marks: ');
+                                        console.log(totalMarks);
+                                        idCallback();
+                                    }
+                                });
+                            },
+                            function(error) {
+                                if (!!error) {
+                                    console.error(error);
+                                    callback(false);
+                                } else {
+                                    cb(null);
+                                }
+                            });
+                    }
+                });
+            }
+        ],
+        function(error, getResult) {
+            if (!!error) {
+                console.error(error);
+                callback(false);
+            } else {
+                var setTotalMarks = [std_id, work_id, totalMarks, '1'];
+                var sql_setResults = "INSERT INTO results (std_id, work_id, obtained_marks, status) VALUES (?, ?, ?, ?)";
+                connection.query(sql_setResults, setTotalMarks, function(error, result) {
+                    if (!!error) {
+                        console.error(error);
+                        callback(false);
+                    } else {
+                        callback(true);
+                    }
+                });
+            }
+        });
+
+}
+
+module.exports.putResults = function(arrResult, callback) {
+    var sql_putResult = "UPDATE results SET feedback = ? WHERE std_id = ? AND work_id = ?";
+    connection.query(sql_putResult, arrResult, function(error, result) {
+        if (!!error) {
+            console.error(error);
+            callback(false);
+        } else {
+            callback(true);
+        }
+    });
+}
+
+module.exports.getResultsByWorkId = function(work_id, callback) {
+    var sql_getREsultsByWorkId = "SELECT * FROM results WHERE work_id = ? AND std_id = ?";
+    connection.query(sql_getREsultsByWorkId, work_id, function(error, resultRows) {
+        if (!!error) {
+            console.error(error);
+            callback(false);
+        } else {
+            callback(resultRows);
+        }
+    });
 }

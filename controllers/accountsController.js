@@ -156,9 +156,23 @@ router.get('/roles/:role_id/users', function(req, res, next){
   });
 });
 
-//router.put('/roles/:role_id/users/');
+router.delete('/roles/:role_id/users/:user_id', function(req, res, next){
+  var role_id = req.params.role_id;
+  var user_id = req.params.user_id;
+  var arrUsers = [role_id, user_id];
+  accountsModels.deleteUsers(arrUsers, function(result){
+    if (result===false) {
+      var errorMsg = "Deletion Unsuccessfull.";
+      sendResponse.sendErrorMessage(errorMsg, res);
+    } else {
+      var successMsg = "Deletion successful.";
+      sendResponse.successStatusMsg(successMsg, res);
+    }
+  });
+});
 
 router.post('/roles/:role_id/users/login', function(req, res, next){
+  console.log('workig');
   var password = req.body.password;
   var role_id = req.params.role_id;
   password = md5(password);
@@ -169,6 +183,7 @@ router.post('/roles/:role_id/users/login', function(req, res, next){
         user = req.body.email;
         accountsModels.checkEmail(user, function(result){
           if (result===0) {
+            console.log('here');
             callback();
           } else {
             var errorMsg = "Email doesn't exist";

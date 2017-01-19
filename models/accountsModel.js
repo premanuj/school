@@ -17,7 +17,6 @@ module.exports.getRoles = function(callback) {
     var sql_getRoles = "SELECT * FROM roles";
     connection.query(sql_getRoles, function(error, result) {
         if (result) {
-            console.log(result);
             callback(result);
         } else {
             console.error(error);
@@ -71,22 +70,23 @@ module.exports.getUsers = function(role_id, callback){
       console.error(error);
       callback(false);
     } else {
-      console.log('reeeeeeee');
-      console.log(result);
       callback(result);
     }
   });
 }
 
-module.exports.loginUser = function(){
-
+module.exports.deleteUsers = function(arrUsers, callback){
+  var sql_deleteUsers = "DELETE FROM users WHERE role_id = ? AND id = ?";
+  connection.query(sql_deleteUsers, email, function(error, result){
+    if (error) {
+      console.error(error);
+      callback(false);
+    } else {
+      console.log('user deleted');
+      callback(true);
+    }
+  });
 }
-
-
-
-
-
-
 
 module.exports.checkEmail = function(email, callback) {
     var sql_checkEmail = "SELECT * FROM users WHERE email = ?";
@@ -117,11 +117,13 @@ module.exports.checkUsername = function(username, callback) {
 
 
 module.exports.checkUser = function(user, callback){
-  var sql_checkUser = "SELECT * FROM users WHERE (username = ? OR email = ? AND password = ?) AND role_id = ?";
+  var sql_checkUser = "SELECT * FROM users WHERE (username = ? OR email = ? ) AND password = ? AND role_id = ?";
   connection.query(sql_checkUser, user, function(error, userRows, fields){
     if (error) {
+      console.error(error);
       callback(false);
     } else {
+      console.log(userRows.length);
       if(userRows.length>0){
         callback(userRows);
       }else {
