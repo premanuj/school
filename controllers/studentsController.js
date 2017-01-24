@@ -94,7 +94,33 @@ router.get("/roles/:role_id/classes/:class_id/students", function(req, res, next
 //        console.log(value);
         data.push({'id':value['id'], 'fname':value['fname'], 'mname': value['mname'], 'lname':value['lname'], 'grade':value['grade'], 'email':value['email'], 'username':value['username'], 'contact':value['contact'], 'address': value['address'], 'dob':value['dob'], 'join_date' : value['join_date'], 'class_id':value['class_id'], 'user_id' : value['user_id']});
       });
-      //console.log(data);
+      console.log(data);
+      sendResponse.sendSuccessData(data, res);
+    }
+  });
+});
+
+/*
+*--------------------------------------------------------
+*This api is used to list all the available new students
+*--------------------------------------------------------
+*/
+
+router.get("/roles/:role_id/students", function(req, res, next){
+  var role_id = req.params.role_id;
+  var arrStudents = [role_id];
+  console.log(arrStudents);
+  studentsModel.getNewStudents(role_id, function(result){
+    if (result===false) {
+      var errorMsg = "Data selection Failed.";
+      sendResponse.sendErrorMessage(errorMsg, res);
+    } else {
+      var data = [];
+      result.forEach(function(value){
+//        console.log(value);
+        data.push({'id':value['id'], 'email':value['email'], 'username':value['username']});
+      });
+      console.log(data);
       sendResponse.sendSuccessData(data, res);
     }
   });

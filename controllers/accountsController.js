@@ -160,9 +160,11 @@ router.delete('/roles/:role_id/users/:user_id', function(req, res, next){
   var role_id = req.params.role_id;
   var user_id = req.params.user_id;
   var arrUsers = [role_id, user_id];
+  console.log(arrUsers);
   accountsModels.deleteUsers(arrUsers, function(result){
     if (result===false) {
       var errorMsg = "Deletion Unsuccessfull.";
+      console.log(errorMsg);
       sendResponse.sendErrorMessage(errorMsg, res);
     } else {
       var successMsg = "Deletion successful.";

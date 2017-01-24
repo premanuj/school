@@ -305,6 +305,7 @@ router.put('/classes/:class_id/subjects/:subject_id', function(req, res, next){
   var class_id = req.params.class_id;
 
   var arrSubjects = [subject, class_id, teacher_id, subject_id];
+  console.log(arrSubjects);
   // if (!req.session.admin) {
   //   console.log('no session for admin');
   //   sendResponse.invalidAccessToken(res);

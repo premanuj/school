@@ -28,6 +28,7 @@ router.post('/users/:user_id/teachers', function(req, res, next){
   var dob = req.body.dob;
   var join_date = req.body.join_date;
   var arrFields = [user_id, fname];
+  console.log(arrFields);
 
   async.waterfall([
     function(callback){
@@ -52,6 +53,47 @@ router.post('/users/:user_id/teachers', function(req, res, next){
     });
 });
 
+
+router.put('/users/:user_id/teachers/:teacher_id', function(req, res, next){
+  // if (!req.session.teacher) {
+  //     sendResponse.invalidAccessToken(res);
+  //     return;
+  // }
+  var user_id = req.params.user_id;
+  var teacher_id = req.params.user_id;
+  var fname = req.body.fname;
+  var mname = req.body.mname;
+  var lname = req.body.lname;
+  var contacts = req.body.contacts;
+  var address = req.body.address;
+  var dob = req.body.dob;
+  var join_date = req.body.join_date;
+  var arrFields = [user_id, teacher_id, fname];
+  console.log(arrFields);
+
+  async.waterfall([
+    function(callback){
+      useFunction.checkFields(res, arrFields, callback);
+    }],
+    function(error, result){
+      if (!!error) {
+        sendResponse.someThingWrongError(res);
+      } else {
+        var arrTeachers = [fname, mname, lname, contacts, address, dob, join_date, teacher_id];
+        teachersModel.updateTeachers(arrTeachers, function(result){
+          if (result===false) {
+            var errorMsg = "Data Insertation Failed";
+            sendResponse.sendErrorMessage(errorMsg, res);
+          }else {
+            var successMsg = "Updated successfully"
+            //var data = {'id':result['insertId'], 'fname':fname, 'mname':mname, 'lname':lname, 'contacts':contacts, 'address':address, 'dob':dob, 'join_date':join_date, 'user_id':user_id};
+            sendResponse.successStatusMsg(successMsg, res);
+          }
+        });
+      }
+    });
+});
+
 /*
 *--------------------------------------------------------
 *This api is used to list all the available teachers
@@ -67,6 +109,55 @@ router.get("/roles/:role_id/teachers", function(req, res, next){
     } else {
       var data = [];
       result.forEach(function(value){
+        //console.log(value);
+        data.push({'id':value['id'], 'fname':value['fname'], 'mname': value['mname'], 'lname':value['lname'], 'email':value['email'], 'contacts':value['contacts'], 'address': value['address'], 'dob':value['dob'], 'join_date' : value['join_date'], 'user_id' : value['user_id']});
+      });
+      sendResponse.sendSuccessData(data, res);
+    }
+  });
+});
+
+/*
+*--------------------------------------------------------
+*This api is used to list of get all the available teachers
+*--------------------------------------------------------
+*/
+
+router.get("/teachers", function(req, res, next){
+  var role_id = req.params.role_id;
+  teachersModel.getAllTeacher(role_id, function(result){
+    if (result===false) {
+      var errorMsg = "Data selection Failed.";
+      sendResponse.sendErrorMessage(errorMsg, res);
+    } else {
+      var data = [];
+      result.forEach(function(value){
+        //console.log(value);
+        data.push({'id':value['id'], 'fname':value['fname'], 'mname': value['mname'], 'lname':value['lname'], 'contacts':value['contacts'], 'address': value['address'], 'dob':value['dob'], 'join_date' : value['join_date'], 'user_id' : value['user_id']});
+      });
+      sendResponse.sendSuccessData(data, res);
+    }
+  });
+});
+
+/*
+*--------------------------------------------------------
+*This api is used to list all the available teachers by user id
+*--------------------------------------------------------
+*/
+
+router.get("/roles/:role_id/users/:user_id/teachers", function(req, res, next){
+  var role_id = req.params.role_id;
+  var user_id = req.params.user_id;
+  var arrTeachers = [role_id, user_id];
+  teachersModel.getTeacherById(arrTeachers, function(result){
+    if (result===false) {
+      var errorMsg = "Data selection Failed.";
+      sendResponse.sendErrorMessage(errorMsg, res);
+    } else {
+      var data = [];
+      result.forEach(function(value){
+        //console.log(value);
         data.push({'id':value['id'], 'fname':value['fname'], 'mname': value['mname'], 'lname':value['lname'], 'email':value['email'], 'contacts':value['contacts'], 'address': value['address'], 'dob':value['dob'], 'join_date' : value['join_date'], 'user_id' : value['user_id']});
       });
       sendResponse.sendSuccessData(data, res);
@@ -102,9 +193,10 @@ router.put("/roles/:role_id/teachers/:t_id", function(req, res, next){
   });
 });
 
-router.delete('/roles/:role_id/teachers/:teacher_id', function(req, res, next){
+router.delete('/roles/:role_id/users/:user_id/teachers/:teacher_id', function(req, res, next){
   console.log('here');
-  var teacher_id = req.params.teacher_id;
+  var teacher_id = req.params.user_id;
+  // var teacher_id = req.params.teacher_id;
   console.log(teacher_id);
   teachersModel.deleteTeachers(teacher_id, function(result){
     if (result===false) {
@@ -126,6 +218,7 @@ router.delete('/roles/:role_id/teachers/:teacher_id', function(req, res, next){
 
 router.get("/teachers/:teacher_id/subjects", function(req, res, next){
   var teacher_id = req.params.teacher_id;
+  console.log(teacher_id);
   teachersModel.getSubjects(teacher_id, function(result){
     if (result===null) {
       var errorMsg = "No subject found for this teacher";
@@ -138,6 +231,7 @@ router.get("/teachers/:teacher_id/subjects", function(req, res, next){
       result.forEach(function(value){
         data.push({"teacher_id": teacher_id, "id": value['id'], "subject":value['name'], "grade": value['grade'], "class_id": value['class_id']});
       });
+      console.log(data);
       sendResponse.sendSuccessData(data, res);
     }
   });

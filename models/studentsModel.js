@@ -28,12 +28,28 @@ module.exports.getStudents = function(role_id, callback) {
 
 
 module.exports.getStudentsByClass = function(role_id, callback) {
-    var sql_getStudents = "SELECT s.id, u.email, u.access_token, u.status, s.fname, s.mname, s.lname, s.dob, s.join_date, s.address, s.contact, s.class_id, s.user_id, c.grade FROM users u INNER JOIN students s ON u.id = s.user_id INNER JOIN classes c ON s.class_id = c.id WHERE u.role_id = ? and s.class_id = ?";
+    // var sql_getStudents = "SELECT s.id, u.email, u.access_token, u.status, s.fname, s.mname, s.lname, s.dob, s.join_date, s.address, s.contact, s.class_id, s.user_id, c.grade FROM users u INNER JOIN students s ON u.id = s.user_id INNER JOIN classes c ON s.class_id = c.id WHERE u.role_id = ? and s.class_id = ?";
+    var sql_getStudents = "SELECT u.id, u.email, s.fname, s.mname, s.lname, s.contact, s.address, s.class_id, s.dob, s.join_date, s.user_id FROM users u LEFT JOIN students s ON u.id = s.user_id WHERE u.role_id=? AND s.class_id =?";
     connection.query(sql_getStudents, role_id, function(error, resultRows, fields) {
         if (!!error) {
             console.error(error);
             callback(false);
         } else {
+          console.log(resultRows);
+            callback(resultRows);
+        }
+    });
+};
+
+module.exports.getNewStudents = function(role_id, callback) {
+    // var sql_getStudents = "SELECT s.id, u.email, u.access_token, u.status, s.fname, s.mname, s.lname, s.dob, s.join_date, s.address, s.contact, s.class_id, s.user_id, c.grade FROM users u INNER JOIN students s ON u.id = s.user_id INNER JOIN classes c ON s.class_id = c.id WHERE u.role_id = ? and s.class_id = ?";
+    var sql_getStudents = "SELECT u.id, u.email, u.username FROM users u LEFT JOIN students s ON u.id = s.user_id WHERE u.role_id=? AND s.id IS NULL";
+    connection.query(sql_getStudents, role_id, function(error, resultRows, fields) {
+        if (!!error) {
+            console.error(error);
+            callback(false);
+        } else {
+          console.log(resultRows);
             callback(resultRows);
         }
     });

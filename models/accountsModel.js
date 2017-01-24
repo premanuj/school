@@ -77,12 +77,11 @@ module.exports.getUsers = function(role_id, callback){
 
 module.exports.deleteUsers = function(arrUsers, callback){
   var sql_deleteUsers = "DELETE FROM users WHERE role_id = ? AND id = ?";
-  connection.query(sql_deleteUsers, email, function(error, result){
-    if (error) {
+  connection.query(sql_deleteUsers, arrUsers, function(error, result){
+    if (!!error) {
       console.error(error);
       callback(false);
     } else {
-      console.log('user deleted');
       callback(true);
     }
   });

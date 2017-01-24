@@ -14,7 +14,35 @@ module.exports.setTeachers = function(arrTeachers, callback) {
 }
 
 module.exports.getTeacher = function(arrTeachers, callback) {
-    sql_getTeachers = "SELECT * FROM users u LEFT JOIN teachers t ON u.id = t.user_id WHERE u.role_id = ?";
+    // sql_getTeachers = "SELECT * FROM users union select * teachers";
+    // sql_getTeachers = "SELECT * FROM teachers t LEFT JOIN users u ON u.id = t.user_id WHERE u.role_id = ?";
+    sql_getTeachers = "SELECT u.id, u.email, t.fname, t.mname, t.lname, t.contacts, t.address, t.dob, t.join_date, t.user_id FROM users u LEFT JOIN teachers t ON u.id = t.user_id WHERE u.role_id = ?";
+    connection.query(sql_getTeachers, arrTeachers, function(error, result) {
+        if (!!error) {
+            callback(false);
+        } else {
+            callback(result);
+        }
+    });
+}
+
+module.exports.getAllTeacher = function(arrTeachers, callback) {
+    // sql_getTeachers = "SELECT * FROM users union select * teachers";
+    // sql_getTeachers = "SELECT * FROM teachers t LEFT JOIN users u ON u.id = t.user_id WHERE u.role_id = ?";
+    sql_getTeachers = "SELECT * FROM teachers";
+    connection.query(sql_getTeachers, arrTeachers, function(error, result) {
+        if (!!error) {
+            callback(false);
+        } else {
+            callback(result);
+        }
+    });
+}
+
+module.exports.getTeacherById = function(arrTeachers, callback) {
+    // sql_getTeachers = "SELECT * FROM users union select * teachers";
+    // sql_getTeachers = "SELECT * FROM teachers t LEFT JOIN users u ON u.id = t.user_id WHERE u.role_id = ?";
+    sql_getTeachers = "SELECT t.id, u.email, t.fname, t.mname, t.lname, t.contacts, t.address, t.dob, t.join_date, t.user_id FROM users u LEFT JOIN teachers t ON u.id = t.user_id WHERE u.role_id = ? AND t.user_id = ?";
     connection.query(sql_getTeachers, arrTeachers, function(error, result) {
         if (!!error) {
             callback(false);
@@ -37,8 +65,22 @@ module.exports.putTeacher = function(arrTeachers, callback) {
     });
 }
 
+module.exports.updateTeachers = function(arrTeachers, callback) {
+    console.log(arrTeachers);
+    var sql_updateTeachers = "UPDATE teachers SET fname = ?, mname = ?, lname = ?, contacts = ?, address = ?, dob = ?, join_date =? WHERE user_id = ?";
+    connection.query(sql_updateTeachers, arrTeachers, function(error, result) {
+        if (!!error) {
+            console.error(error);
+            callback(false);
+        } else {
+          console.log('updated successfully');
+            callback(result);
+        }
+    });
+}
+
 module.exports.deleteTeachers = function(deleteTeachers, callback) {
-    var sql_deleteTeachers = "DELETE FROM teachers WHERE id = ?";
+    var sql_deleteTeachers = "DELETE FROM users WHERE id = ?";
     connection.query(sql_deleteTeachers, deleteTeachers, function(error, result) {
         if (!!error) {
             console.error(error);
